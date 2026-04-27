@@ -3,424 +3,39 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Task — To-Do Management System</title>
+  <title>TaskFlow — To-Do Management</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
   <style>
-    :root {
-      --bg:       #0d0d12;
-      --surface:  #13131a;
-      --card:     #1a1a24;
-      --border:   #2a2a3a;
-      --accent:   #7c6aff;
-      --success:  #4fdf90;
-      --warn:     #ffb347;
-      --danger:   #ff4f6a;
-      --text:     #e8e8f0;
-      --muted:    #6b6b90;
+    .sm-options { display: flex; flex-direction: column; gap: .55rem; }
+    .sm-option  { display: flex; align-items: center; cursor: pointer; margin: 0; }
+    .sm-option input[type="radio"] { display: none; }
+    .sm-opt-inner {
+      display: flex; align-items: center; gap: .6rem;
+      width: 100%; padding: .6rem .85rem;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 9px; font-size: .87rem;
+      transition: border-color .15s, background .15s;
     }
-    * { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
+    .sm-option input:checked + .sm-opt-inner {
+      border-color: var(--accent);
+      background: rgba(124,106,255,.1);
     }
-    body { 
-    background: var(--bg); 
-    color: var(--text); 
-    font-family: 'DM Sans', sans-serif; 
-    min-height: 100vh; 
-    }
+    .sm-option:hover .sm-opt-inner { border-color: var(--accent); }
 
-    .sidebar {
-      position: fixed; top: 0; left: 0;
-      width: 230px; height: 100vh;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      padding: 1.8rem 1rem;
-      display: flex; flex-direction: column; z-index: 100;
+    @keyframes taskPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(124,106,255,.9), inset 0 0 0 2px var(--accent); border-color: var(--accent); background: rgba(124,106,255,.18); }
+      40%  { box-shadow: 0 0 0 10px rgba(124,106,255,.0), inset 0 0 0 2px var(--accent); border-color: var(--accent); background: rgba(124,106,255,.12); }
+      70%  { border-color: var(--accent); background: rgba(124,106,255,.08); }
+      100% { box-shadow: none; border-color: var(--border); background: transparent; }
     }
-    .logo { 
-    font-family: 'Syne', sans-serif; 
-    font-size: 1.4rem; 
-    font-weight: 800; 
-    letter-spacing: -.03em; 
-    margin-bottom: 2rem; 
-    padding-left: .5rem; 
-    }
-    .logo span { 
-    color: var(--accent); 
-    }
-
-    .nav-btn {
-      display: flex; 
-      align-items: center; 
-      gap: .7rem;
-      padding: .6rem .9rem; 
-      border-radius: 10px;
-      color: var(--muted); 
-      font-size: .85rem; 
-      font-weight: 500;
-      cursor: pointer; 
-      border: none; 
-      background: none;
-      width: 100%; 
-      text-align: left; 
-      transition: all .2s; 
-      margin-bottom: .2rem;
-      font-family: 'DM Sans', sans-serif;
-    }
-    .nav-btn:hover, .nav-btn.active { 
-    background: rgba(124,106,255,.12); 
-    color: var(--accent); 
-    }
-    .nav-btn i { 
-    font-size: 1rem; 
-    width: 18px; 
-    }
-
-    .sidebar-bottom { 
-    margin-top: auto; 
-    background: var(--card); 
-    border: 1px solid var(--border); 
-    border-radius: 12px; 
-    padding: .9rem 1rem; 
-    }
-    .sidebar-bottom .lbl { 
-    font-size: .68rem; 
-    color: var(--muted); 
-    text-transform: uppercase; 
-    letter-spacing: .08em; 
-    margin-bottom: .6rem; 
-    }
-    .stat-row { 
-    display: flex; 
-    justify-content: space-between; 
-    font-size: .78rem; 
-    padding: .2rem 0; 
-    }
-    .dot { 
-    width: 7px; 
-    height: 7px; 
-    border-radius: 50%; 
-    display: inline-block; 
-    margin-right: .4rem; 
-    }
-
-    .main { 
-    margin-left: 230px; 
-    padding: 2rem; 
-    }
-
-    .page-header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: flex-start; 
-    margin-bottom: 1.5rem; 
-    }
-    .page-title { 
-    font-family: 'Syne', sans-serif; 
-    font-size: 1.8rem; 
-    font-weight: 800; 
-    letter-spacing: -.04em; 
-    }
-    .page-sub { 
-    color: var(--muted);
-    font-size: .85rem; 
-    margin-top: .2rem; 
-    }
-
-    .btn-add {
-      background: var(--accent); 
-      color: #fff; 
-      border: none; 
-      border-radius: 10px;
-      padding: .55rem 1.2rem; 
-      font-size: .85rem; 
-      font-weight: 600; 
-      cursor: pointer;
-      display: flex; 
-      align-items: center; 
-      gap: .4rem; 
-      transition: background .2s, transform .15s;
-      font-family: 'DM Sans', sans-serif;
-    }
-    .btn-add:hover { 
-        background: #6a58e0; 
-        transform: translateY(-1px); 
-    }
-
-    .stats-row { 
-        display: grid; 
-        grid-template-columns: repeat(3,1fr); 
-        gap: .8rem; 
-        margin-bottom: 1.5rem; }
-    .stat-card { 
-        background: var(--card); 
-        border: 1px solid var(--border); 
-        border-radius: 12px; 
-        padding: 1rem 1.1rem; }
-    .stat-card .num { 
-        font-family: 'Syne', sans-serif; 
-        font-size: 1.8rem; 
-        font-weight: 800; 
-    }
-    .stat-card .slbl { 
-        font-size: .75rem; 
-        color: var(--muted); 
-        margin-top: .1rem; 
-    }
-
-    .filter-row { 
-        display: flex; 
-        gap: .5rem; 
-        margin-bottom: 1.2rem; 
-        flex-wrap: wrap; 
-    }
-    .f-btn {
-      padding: .38rem .9rem; 
-      border-radius: 8px; 
-      font-size: .8rem; 
-      font-weight: 500;
-      cursor: pointer; 
-      border: 1px solid var(--border); 
-      background: var(--surface);
-      color: var(--muted); 
-      transition: all .2s; 
-      font-family: 'DM Sans', sans-serif;
-    }
-    .f-btn:hover, .f-btn.active { 
-        border-color: var(--accent); 
-        color: var(--accent); 
-        background: rgba(124,106,255,.1); 
-    }
-
-    .cards-grid { 
-        display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); 
-        gap: .9rem; }
-    .task-card {
-      background: var(--card); 
-      border: 1px solid var(--border);
-      border-radius: 14px; 
-      padding: 1.1rem;
-      position: relative; 
-      overflow: hidden;
-      transition: border-color .2s, transform .2s;
-    }
-    .task-card::before { 
-        content:''; 
-        position:absolute; 
-        top:0; 
-        left:0; 
-        width:3px; 
-        height:100%; }
-    .task-card.high::before   { 
-        background: var(--danger); 
-    }
-    .task-card.medium::before { 
-        background: var(--warn); 
-    }
-    .task-card.low::before    { 
-        background: var(--success); 
-    }
-    .task-card:hover { 
-        border-color: var(--accent); 
-        transform: translateY(-2px); 
-    }
-
-    .card-top { 
-        display:flex; 
-        justify-content:space-between; 
-        align-items:flex-start; 
-        margin-bottom:.7rem; 
-    }
-    .card-title { 
-        font-family:'Syne',sans-serif; 
-        font-size:.95rem; 
-        font-weight:700; 
-        line-height:1.3; 
-        flex:1; padding-right:.5rem; 
-    }
-    .card-title.done { 
-        text-decoration:line-through; 
-        color:var(--muted); 
-    }
-    .card-actions { 
-        display:flex; 
-        gap:.35rem; }
-    .ic-btn {
-      width:28px; 
-      height:28px; 
-      border-radius:7px; 
-      border:1px solid var(--border);
-      background:var(--surface); 
-      color:var(--muted); 
-      display:flex; 
-      align-items:center;
-      justify-content:center; 
-      cursor:pointer; 
-      font-size:.75rem; 
-      transition:all .2s;
-    }
-    .ic-btn.edit:hover { 
-        border-color:var(--accent); 
-        color:var(--accent); 
-    }
-    .ic-btn.del:hover  { 
-        border-color:var(--danger);  
-        color:var(--danger); }
-
-    .card-desc { 
-        font-size:.8rem; 
-        color:var(--muted); 
-        margin-bottom:.8rem; 
-        line-height:1.5; 
-    }
-    .card-meta { 
-        display:flex; 
-        gap:.4rem; 
-        flex-wrap:wrap; 
-        align-items:center; 
-    }
-
-    .badge { 
-        font-size:.67rem; 
-        font-weight:600; 
-        padding:.22rem .6rem; 
-        border-radius:6px; 
-        text-transform:uppercase; 
-        letter-spacing:.05em; 
-    }
-    .b-pending     { 
-        background:rgba(107,107,144,.2); 
-        color:var(--muted); 
-    }
-    .b-in_progress { 
-        background:rgba(124,106,255,.2); 
-        color:var(--accent); 
-    }
-    .b-completed   { 
-        background:rgba(79,223,144,.2);  
-        color:var(--success); 
-    }
-    .b-high        { 
-        background:rgba(255,79,106,.15); 
-        color:var(--danger); 
-    }
-    .b-medium      { 
-        background:rgba(255,179,71,.15); 
-        color:var(--warn); 
-    }
-    .b-low         { 
-        background:rgba(79,223,144,.15); 
-        color:var(--success); 
-    }
-    .card-date { 
-        font-size:.7rem; 
-        color:var(--muted); 
-        margin-left:auto; 
-        display:flex; 
-        align-items:center; 
-        gap:.25rem; 
-    }
-
-    .empty { 
-        text-align:center; 
-        padding:4rem; 
-        color:var(--muted); 
-    }
-    .empty i { 
-        font-size:2.5rem; 
-        opacity:.3; 
-    }
-
-    .modal-content { 
-        background:var(--surface); 
-        border:1px solid var(--border); 
-        border-radius:16px; color:var(--text); 
-    }
-    .modal-header { 
-        border-bottom:1px solid var(--border); 
-        padding:1.1rem 1.4rem; }
-    .modal-footer { 
-        border-top:1px solid var(--border); 
-    }
-    .modal-title { 
-        font-family:'Syne',sans-serif; 
-        font-weight:700; 
-        font-size:1rem; 
-    }
-    .btn-close { 
-        filter:invert(1); 
-    }
-    .form-label { 
-        font-size:.8rem; 
-        font-weight:500; 
-        color:var(--muted); 
-        margin-bottom:.25rem; 
-    }
-    .form-control, .form-select { 
-        background:var(--card); 
-        border:1px solid var(--border); 
-        color:var(--text); 
-        border-radius:9px; 
-        font-size:.85rem; 
-        padding:.55rem .85rem; 
-    }
-    .form-control:focus, .form-select:focus { 
-        background:var(--card); 
-        border-color:var(--accent); 
-        color:var(--text); 
-        box-shadow:0 0 0 3px rgba(124,106,255,.15); 
-    }
-    .form-select option { 
-        background:var(--surface); }
-    .btn-save { 
-        background:var(--accent); 
-        color:#fff; border:none; 
-        border-radius:9px; 
-        padding:.55rem 1.4rem; 
-        font-weight:600; 
-        font-size:.85rem; 
-        cursor:pointer; 
-        font-family:'DM Sans',sans-serif; 
-        transition:background .2s; 
-    }
-    .btn-save:hover { 
-        background:#6a58e0; }
-    .btn-cancel { 
-        background:var(--card); 
-        color:var(--muted); 
-        border:1px solid var(--border); 
-        border-radius:9px; 
-        padding:.55rem 1.1rem; 
-        font-size:.85rem; cursor:pointer; 
-        font-family:'DM Sans',sans-serif; }
-
-    .toast { 
-        background:var(--surface); 
-        border:1px solid var(--border); 
-        color:var(--text); 
-        border-radius:12px; 
-        font-size:.83rem; }
-
-    @media (max-width:768px) {
-      .sidebar { 
-        position:relative; 
-        width:100%; 
-        height:auto; 
-        flex-direction:row; 
-        flex-wrap:wrap; 
-        padding:1rem; 
-    }
-      .sidebar-bottom { 
-        display:none; 
-    }
-      .main { 
-        margin-left:0; 
-        padding:1rem; 
-    }
+    .task-highlight {
+      border-color: var(--accent) !important;
+      background: rgba(124,106,255,.18) !important;
+      animation: taskPulse 2.6s ease forwards;
     }
   </style>
 </head>
@@ -428,76 +43,245 @@
 
 <aside class="sidebar">
   <div class="logo">Task<span>Flow</span></div>
+
   <nav>
-    <button class="nav-btn active" onclick="setFilter('')"><i class="bi bi-grid-3x3-gap"></i> All Tasks</button>
-    <button class="nav-btn" onclick="setFilter('pending')"><i class="bi bi-clock"></i> Pending</button>
-    <button class="nav-btn" onclick="setFilter('in_progress')"><i class="bi bi-arrow-repeat"></i> In Progress</button>
-    <button class="nav-btn" onclick="setFilter('completed')"><i class="bi bi-check-circle"></i> Completed</button>
+    <button class="nav-btn active" onclick="setFilter('')">
+      <i class="bi bi-grid-3x3-gap"></i> All Tasks
+    </button>
+    <button class="nav-btn" onclick="setFilter('pending')">
+      <i class="bi bi-clock"></i> Pending
+    </button>
+    <button class="nav-btn" onclick="setFilter('in_progress')">
+      <i class="bi bi-arrow-repeat"></i> In Progress
+    </button>
+    <button class="nav-btn" onclick="setFilter('completed')">
+      <i class="bi bi-check-circle"></i> Completed
+    </button>
   </nav>
+
+  <div class="project-section">
+    <div class="project-section-header">
+      <span class="sb-label" style="margin:0">Projects</span>
+      <button class="btn-new-project" onclick="openNewProject()" title="New project">
+        <i class="bi bi-plus-lg"></i>
+      </button>
+    </div>
+    <div class="project-search-wrap">
+      <i class="bi bi-search"></i>
+      <input type="text" id="projectSearch" placeholder="Search projects…"
+             oninput="filterProjects(this.value)" autocomplete="off"/>
+    </div>
+    <div id="projectList">
+      <div style="font-size:.75rem;color:var(--muted);padding:.3rem .4rem">Loading…</div>
+    </div>
+  </div>
+
   <div class="sidebar-bottom">
-    <div class="lbl">Overview</div>
-    <div class="stat-row"><span><span class="dot" style="background:var(--muted)"></span>Pending</span><strong id="s-pending">0</strong></div>
-    <div class="stat-row"><span><span class="dot" style="background:var(--accent)"></span>In Progress</span><strong id="s-progress">0</strong></div>
-    <div class="stat-row"><span><span class="dot" style="background:var(--success)"></span>Completed</span><strong id="s-done">0</strong></div>
+    <div class="overview-header" onclick="toggleOverview()">
+      <div class="sb-label" style="margin:0">Overview</div>
+      <i class="bi bi-chevron-up overview-chevron" id="overviewChevron"></i>
+    </div>
+    <div id="overviewStats">
+      <div class="stat-row">
+        <span><span class="dot" style="background:var(--text)"></span>All Tasks</span>
+        <strong id="s-total">0</strong>
+      </div>
+      <div class="stat-row">
+        <span><span class="dot" style="background:var(--accent)"></span>Projects</span>
+        <strong id="s-projects">0</strong>
+      </div>
+      <div class="stat-row">
+        <span><span class="dot" style="background:var(--muted)"></span>Pending</span>
+        <strong id="s-pending">0</strong>
+      </div>
+      <div class="stat-row">
+        <span><span class="dot" style="background:var(--accent)"></span>In Progress</span>
+        <strong id="s-progress">0</strong>
+      </div>
+      <div class="stat-row">
+        <span><span class="dot" style="background:var(--success)"></span>Completed</span>
+        <strong id="s-done">0</strong>
+      </div>
+    </div>
+
+        <div style="margin-top:1rem; border-top:1px solid var(--border); padding-top:.8rem;">
+      <div style="font-size:.75rem; color:var(--muted); margin-bottom:.4rem;">
+        <i class="bi bi-person-circle"></i> <span id="loggedInUser"></span>
+      </div>
+      <button onclick="logout()" style="
+        width:100%; background:none; border:1px solid var(--border);
+        color:var(--muted); border-radius:8px; padding:.35rem;
+        font-size:.78rem; cursor:pointer; font-family:'DM Sans',sans-serif;
+        transition: all .2s;
+      " onmouseover="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'"
+         onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+    </div>
   </div>
 </aside>
 
 <main class="main">
+
   <div class="page-header">
-    <div>
-      <div class="page-title">My Tasks</div>
-      <div class="page-sub">Manage and track your to-dos</div>
+    <div class="page-header-left">
+      <div class="page-title" id="pageTitle">My Tasks</div>
+      <div class="page-sub" id="pageSub">Manage and track your to-dos</div>
     </div>
-    <button class="btn-add" onclick="openAdd()"><i class="bi bi-plus-lg"></i> Add Task</button>
+    <div class="page-header-right">
+      <button class="btn-project-menu" id="btnProjectMenu" onclick="toggleProjectPanel()" style="display:none" title="Project menu">
+        <i class="bi bi-list"></i>
+      </button>
+      <button class="btn-add" id="btnAddTask" onclick="openAdd()" style="display:none">
+        <i class="bi bi-plus-lg"></i> Add Task
+      </button>
+
+            <div class="project-panel" id="projectPanel" style="display:none">
+
+        <div class="project-panel-grid">
+                    <div class="pp-block">
+            <div class="pp-label" style="display:flex;align-items:center;justify-content:space-between">
+              <span><i class="bi bi-text-left"></i> Description</span>
+              <button class="pp-desc-edit-btn pp-owner-only" id="ppDescEditBtn" onclick="toggleDescEdit()" style="display:none" title="Edit description">
+                <i class="bi bi-pencil"></i>
+              </button>
+            </div>
+            <div class="pp-desc" id="ppDescription">—</div>
+            <textarea class="pp-desc pp-desc-textarea" id="ppDescTextarea" rows="3" style="display:none;resize:vertical;width:100%"></textarea>
+            <div class="pp-desc-actions" id="ppDescActions" style="display:none;margin-top:.4rem;display:none;gap:.4rem;justify-content:flex-end">
+              <button class="btn-cancel" style="font-size:.75rem;padding:.3rem .7rem" onclick="cancelDescEdit()">Cancel</button>
+              <button class="btn-save" style="font-size:.75rem;padding:.3rem .7rem" onclick="saveDescription()">Save</button>
+            </div>
+          </div>
+
+                    <div class="pp-meta">
+            <div class="pp-item">
+              <span class="pp-label"><i class="bi bi-person-fill"></i> Owner</span>
+              <span class="pp-value" id="ppOwner">—</span>
+            </div>
+            <div class="pp-item">
+              <span class="pp-label"><i class="bi bi-calendar3"></i> Created</span>
+              <span class="pp-value" id="ppCreated">—</span>
+            </div>
+            <div class="pp-item">
+              <span class="pp-label"><i class="bi bi-shield-check"></i> Your role</span>
+              <span class="pp-value" id="ppRole">—</span>
+            </div>
+            <div class="pp-item">
+              <span class="pp-label"><i class="bi bi-eye"></i> Visibility</span>
+              <span class="pp-value" id="ppVisibility">—</span>
+            </div>
+          </div>
+
+                    <div class="pp-block pp-block-members">
+            <div class="pp-label"><i class="bi bi-people-fill"></i> Members</div>
+            <div class="pp-members" id="ppMembers"></div>
+          </div>
+        </div>
+
+                <div class="pp-actions">
+                    <button class="pp-btn-requests pp-owner-only" id="ppBtnRequests"
+                  onclick="openRequestsModal(currentProjectId)" style="display:none">
+            <i class="bi bi-person-check"></i> Join Requests
+            <span class="pp-req-count" id="ppReqCount" style="display:none"></span>
+          </button>
+
+          <button class="pp-btn-visibility pp-owner-only" id="ppBtnVisibility"
+                  onclick="toggleVisibility()" style="display:none">
+            <i class="bi bi-globe" id="ppVisIcon"></i> <span id="ppVisLabel">Public</span>
+          </button>
+
+          <button class="pp-btn-delete pp-owner-only" id="ppBtnDelete"
+                  onclick="deleteProjectFromPanel()" style="display:none">
+            <i class="bi bi-trash"></i> Delete Project
+          </button>
+
+                    <button class="pp-btn-leave pp-member-only" id="ppBtnLeave"
+                  onclick="leaveFromPanel()" style="display:none">
+            <i class="bi bi-box-arrow-left"></i> Leave Project
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="num" style="color:var(--muted)" id="total">0</div>
+    <div id="panelBackdrop" style="display:none; position:fixed; inset:0; z-index:499;" onclick="closeProjectPanel()"></div>
+
+    <div class="stats-row" id="statsRow">
+    <div class="stat-card" id="sc-total">
+      <div class="num" id="stat-total">0</div>
       <div class="slbl">Total Tasks</div>
     </div>
-    <div class="stat-card">
-      <div class="num" style="color:var(--accent)" id="inprog">0</div>
+    <div class="stat-card warn" id="sc-pending">
+      <div class="num" id="stat-pending">0</div>
+      <div class="slbl">Pending</div>
+    </div>
+    <div class="stat-card accent" id="sc-inprog">
+      <div class="num" id="stat-inprog">0</div>
       <div class="slbl">In Progress</div>
     </div>
-    <div class="stat-card">
-      <div class="num" style="color:var(--success)" id="done">0</div>
+    <div class="stat-card success" id="sc-done">
+      <div class="num" id="stat-done">0</div>
       <div class="slbl">Completed</div>
     </div>
   </div>
 
-  <div class="filter-row">
-    <button class="f-btn active" onclick="setFilter('')">All</button>
-    <button class="f-btn" onclick="setFilter('pending')">Pending</button>
-    <button class="f-btn" onclick="setFilter('in_progress')">In Progress</button>
-    <button class="f-btn" onclick="setFilter('completed')">Completed</button>
+    <div class="filter-row">
+    <button class="f-btn active" onclick="setProjectFilter('')">All</button>
+    <button class="f-btn" onclick="setProjectFilter('pending')">Pending</button>
+    <button class="f-btn" onclick="setProjectFilter('in_progress')">In Progress</button>
+    <button class="f-btn" onclick="setProjectFilter('completed')">Completed</button>
   </div>
 
-  <div id="taskGrid">
-    <div class="empty"><div class="spinner-border text-secondary mb-3" role="status"></div><p>Loading tasks...</p></div>
+    <div class="taskgrid-wrap">
+    <div id="taskGrid">
+      <div class="empty">
+        <div class="spinner-border text-secondary mb-3" role="status"></div>
+        <p>Loading tasks…</p>
+      </div>
+    </div>
+    <div class="taskgrid-track" id="taskGridTrack">
+      <div class="taskgrid-thumb" id="taskGridThumb"></div>
+    </div>
   </div>
+
 </main>
 
-<!-- MODAL -->
 <div class="modal fade" id="taskModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
+
       <div class="modal-header">
         <span class="modal-title" id="modalTitle">Add Task</span>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
+
       <div class="modal-body p-4">
         <input type="hidden" id="taskId"/>
-        <div class="mb-3">
-          <label class="form-label">Title *</label>
-          <input type="text" class="form-control" id="taskTitle" placeholder="What needs to be done?"/>
+
+                <div class="mb-3" id="taskProjectRow">
+          <label class="form-label">Project</label>
+          <div id="taskProjectDisplay" class="project-badge-display hidden"></div>
+          <select class="form-select" id="taskProject">
+            <option value="">— No project —</option>
+          </select>
         </div>
-        <div class="mb-3">
+
+                <div class="mb-3">
+          <label class="form-label">Title <span class="req">*</span></label>
+          <input type="text" class="form-control" id="taskTitle"
+                 placeholder="What needs to be done?" maxlength="150"/>
+          <div class="field-error" id="err-title"></div>
+        </div>
+
+                <div class="mb-3">
           <label class="form-label">Description</label>
-          <textarea class="form-control" id="taskDesc" rows="3" placeholder="Add details..."></textarea>
+          <textarea class="form-control" id="taskDesc" rows="3"
+                    placeholder="Add details…"></textarea>
         </div>
-        <div class="row g-3">
-          <div class="col-6">
+
+                <div class="row g-3 mb-3">
+          <div class="col-sm-6">
             <label class="form-label">Status</label>
             <select class="form-select" id="taskStatus">
               <option value="pending">Pending</option>
@@ -505,7 +289,7 @@
               <option value="completed">Completed</option>
             </select>
           </div>
-          <div class="col-6">
+          <div class="col-sm-6">
             <label class="form-label">Priority</label>
             <select class="form-select" id="taskPriority">
               <option value="low">Low</option>
@@ -514,150 +298,249 @@
             </select>
           </div>
         </div>
-        <div class="mt-3">
+
+                <div class="mb-3">
           <label class="form-label">Due Date</label>
           <input type="date" class="form-control" id="taskDue"/>
         </div>
+
+                <div class="mb-1">
+          <label class="form-label">Assign To</label>
+          <div class="assign-toggle">
+            <button type="button" class="assign-opt active" id="optEveryone"
+                    onclick="setAssignMode('everyone')">
+              <i class="bi bi-people-fill"></i> Everyone
+            </button>
+            <button type="button" class="assign-opt" id="optSpecific"
+                    onclick="setAssignMode('specific')">
+              <i class="bi bi-person-fill"></i> Specific People
+            </button>
+          </div>
+        </div>
+
+                <div id="assigneeWrapper" class="assignee-wrapper hidden">
+          <div class="assignee-tags" id="assigneeTags"></div>
+          <div class="assignee-input-row">
+            <input type="text" class="form-control" id="assigneeInput"
+                   placeholder="Type a name and press Enter or comma…"/>
+            <button type="button" class="btn-tag-add" onclick="addAssigneeFromInput()">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+          <div class="field-hint">
+            Press <kbd>Enter</kbd> or <kbd>,</kbd> to add multiple names.
+          </div>
+          <div class="field-error" id="err-assign"></div>
+        </div>
+
       </div>
+
       <div class="modal-footer gap-2 px-4 pb-4">
         <button class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
         <button class="btn-save" onclick="saveTask()">Save Task</button>
       </div>
+
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999">
   <div id="liveToast" class="toast">
     <div class="toast-body d-flex align-items-center gap-2" id="toastMsg"></div>
   </div>
 </div>
 
+<div class="modal fade" id="projectModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">New Project</span>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <label class="form-label">Project Name <span class="req">*</span></label>
+        <input type="text" class="form-control" id="projectName"
+               placeholder="e.g. Website Redesign" maxlength="150"/>
+        <div class="field-error" id="err-project"></div>
+        <label class="form-label mt-2">Description <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+        <textarea class="form-control" id="projectDesc" rows="2"
+                  placeholder="What is this project about?"></textarea>
+        <label class="form-label mt-3">Visibility</label>
+        <div class="assign-toggle">
+          <button type="button" class="assign-opt active" id="visPublic" onclick="setVisibility('public')">
+            <i class="bi bi-globe"></i> Public
+          </button>
+          <button type="button" class="assign-opt" id="visPrivate" onclick="setVisibility('private')">
+            <i class="bi bi-lock-fill"></i> Private
+          </button>
+        </div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.35rem">
+          Public projects appear in search. Private projects are invite-only.
+        </div>
+      </div>
+      <div class="modal-footer gap-2 px-4 pb-4">
+        <button class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-save" onclick="saveProject()">Create Project</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
+    <div class="modal-content logout-modal-content">
+      <div class="logout-modal-icon">
+        <i class="bi bi-box-arrow-right"></i>
+      </div>
+      <div class="logout-modal-title">Log out?</div>
+      <div class="logout-modal-sub">You'll need to sign in again to access your tasks.</div>
+      <div class="logout-modal-actions">
+        <button class="btn-logout-cancel" data-bs-dismiss="modal">Stay</button>
+        <button class="btn-logout-confirm" id="btnConfirmLogout">Log out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Project Info Modal -->
+<div class="modal fade" id="projectInfoModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
+    <div class="modal-content">
+      <div class="modal-header" style="border-bottom:1px solid var(--border)">
+        <span class="modal-title" id="piName">Project Details</span>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+
+        <div class="pi-row">
+          <span class="pi-label"><i class="bi bi-person-fill"></i> Owner</span>
+          <span class="pi-value" id="piOwner">—</span>
+        </div>
+
+        <div class="pi-row">
+          <span class="pi-label"><i class="bi bi-calendar3"></i> Created</span>
+          <span class="pi-value" id="piCreated">—</span>
+        </div>
+
+        <div class="pi-row">
+          <span class="pi-label"><i class="bi bi-shield-check"></i> Your status</span>
+          <span class="pi-value" id="piStatus">—</span>
+        </div>
+
+        <div class="pi-row">
+          <span class="pi-label"><i class="bi bi-eye"></i> Visibility</span>
+          <span class="pi-value" id="piVisibility">—</span>
+        </div>
+
+        <div class="pi-block">
+          <div class="pi-label"><i class="bi bi-text-left"></i> Description</div>
+          <div class="pi-desc" id="piDescription">—</div>
+        </div>
+
+        <div class="pi-block">
+          <div class="pi-label"><i class="bi bi-people-fill"></i> Members</div>
+          <div class="pi-members" id="piMembers"></div>
+        </div>
+
+        <!-- Action row -->
+        <div class="pi-action-row" id="piActionRow" style="display:none">
+          <button class="pp-btn-requests" id="piBtnRequests" style="display:none"
+                  onclick="openRequestsFromInfo()">
+            <i class="bi bi-person-check"></i> Join Requests
+            <span class="pp-req-count" id="piReqCount" style="display:none"></span>
+          </button>
+          <button class="pi-btn-join" id="piBtnJoin" onclick="joinFromInfo()">
+            <i class="bi bi-person-plus"></i> Join
+          </button>
+        </div>
+
+      </div>
+      <div class="modal-footer gap-2 px-4 pb-4">
+        <button class="btn-cancel" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
+    <div class="modal-content">
+      <div class="confirm-modal-icon" id="confirmIcon">
+        <i class="bi bi-exclamation-triangle-fill" id="confirmIconInner"></i>
+      </div>
+      <div class="confirm-modal-title" id="confirmTitle">Are you sure?</div>
+      <div class="confirm-modal-sub" id="confirmSub"></div>
+      <div class="confirm-modal-warning" id="confirmWarning" style="display:none"></div>
+      <div class="confirm-modal-actions">
+        <button class="btn-confirm-cancel" id="btnConfirmCancel">Cancel</button>
+        <button class="btn-confirm-ok" id="btnConfirmOk">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Join Requests Modal -->
+<div class="modal fade" id="requestsModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:440px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" id="requestsModalTitle">Join Requests</span>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="requestsProjectId"/>
+        <div id="requestsList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Task Status Modal (for assigned non-owner users) -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:360px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title"><i class="bi bi-arrow-repeat"></i> Update Status</span>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="smTaskId"/>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:1rem;word-break:break-word" id="smTaskTitle"></div>
+
+        <div class="sm-options">
+          <label class="sm-option">
+            <input type="radio" name="smStatus" value="pending"/>
+            <span class="sm-opt-inner">
+              <span class="dot" style="background:var(--muted)"></span>
+              Pending
+            </span>
+          </label>
+          <label class="sm-option">
+            <input type="radio" name="smStatus" value="in_progress"/>
+            <span class="sm-opt-inner">
+              <span class="dot" style="background:var(--accent)"></span>
+              In Progress
+            </span>
+          </label>
+          <label class="sm-option">
+            <input type="radio" name="smStatus" value="completed"/>
+            <span class="sm-opt-inner">
+              <span class="dot" style="background:var(--success)"></span>
+              Completed
+            </span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer gap-2 px-4 pb-4">
+        <button class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-save" id="smSaveBtn" onclick="saveStatusModal()">Save Status</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  const API = 'api.php';
-  let modal, toast, currentFilter = '';
-
-  document.addEventListener('DOMContentLoaded', () => {
-    modal = new bootstrap.Modal(document.getElementById('taskModal'));
-    toast = new bootstrap.Toast(document.getElementById('liveToast'), { delay: 2500 });
-    loadTasks();
-  });
-
-  async function loadTasks() {
-    try {
-      const url  = currentFilter ? `${API}?status=${currentFilter}` : API;
-      const res  = await fetch(url);
-      const data = await res.json();
-      if (data.success) { renderCards(data.data); updateStats(data.data); }
-    } catch { showToast('Cannot connect to API.', false); }
-  }
-
-  function renderCards(tasks) {
-    const grid = document.getElementById('taskGrid');
-    if (!tasks.length) {
-      grid.innerHTML = `<div class="empty"><i class="bi bi-inbox"></i><p class="mt-2">No tasks here. Add one!</p></div>`;
-      return;
-    }
-    grid.innerHTML = `<div class="cards-grid">${tasks.map(card).join('')}</div>`;
-  }
-
-  function card(t) {
-    const due  = t.due_date ? new Date(t.due_date + 'T00:00:00').toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' }) : '';
-    const done = t.status === 'completed';
-    return `
-      <div class="task-card ${t.priority}">
-        <div class="card-top">
-          <div class="card-title ${done ? 'done' : ''}">${esc(t.title)}</div>
-          <div class="card-actions">
-            <button class="ic-btn edit" onclick="openEdit(${t.id})" title="Edit"><i class="bi bi-pencil"></i></button>
-            <button class="ic-btn del"  onclick="delTask(${t.id})"  title="Delete"><i class="bi bi-trash"></i></button>
-          </div>
-        </div>
-        ${t.description ? `<div class="card-desc">${esc(t.description)}</div>` : ''}
-        <div class="card-meta">
-          <span class="badge b-${t.status}">${statusLbl(t.status)}</span>
-          <span class="badge b-${t.priority}">${cap(t.priority)}</span>
-          ${due ? `<span class="card-date"><i class="bi bi-calendar3"></i>${due}</span>` : ''}
-        </div>
-      </div>`;
-  }
-
-  function updateStats(tasks) {
-    const p = tasks.filter(t => t.status === 'pending').length;
-    const i = tasks.filter(t => t.status === 'in_progress').length;
-    const d = tasks.filter(t => t.status === 'completed').length;
-    document.getElementById('total').textContent    = tasks.length;
-    document.getElementById('inprog').textContent   = i;
-    document.getElementById('done').textContent     = d;
-    document.getElementById('s-pending').textContent  = p;
-    document.getElementById('s-progress').textContent = i;
-    document.getElementById('s-done').textContent     = d;
-  }
-
-  function setFilter(status) {
-    currentFilter = status;
-    const order = ['','pending','in_progress','completed'];
-    document.querySelectorAll('.nav-btn').forEach((b,i) => b.classList.toggle('active', i === order.indexOf(status)));
-    document.querySelectorAll('.f-btn').forEach((b,i)  => b.classList.toggle('active', i === order.indexOf(status)));
-    loadTasks();
-  }
-
-  function openAdd() {
-    document.getElementById('modalTitle').textContent = 'Add Task';
-    ['taskId','taskTitle','taskDesc','taskDue'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('taskStatus').value   = 'pending';
-    document.getElementById('taskPriority').value = 'medium';
-    modal.show();
-  }
-
-  async function openEdit(id) {
-    const res  = await fetch(`${API}?id=${id}`);
-    const data = await res.json();
-    const t    = data.data;
-    document.getElementById('modalTitle').textContent = 'Edit Task';
-    document.getElementById('taskId').value       = t.id;
-    document.getElementById('taskTitle').value    = t.title;
-    document.getElementById('taskDesc').value     = t.description;
-    document.getElementById('taskStatus').value   = t.status;
-    document.getElementById('taskPriority').value = t.priority;
-    document.getElementById('taskDue').value      = t.due_date ?? '';
-    modal.show();
-  }
-
-  async function saveTask() {
-    const id    = document.getElementById('taskId').value;
-    const title = document.getElementById('taskTitle').value.trim();
-    if (!title) { document.getElementById('taskTitle').focus(); return; }
-    const body = {
-      id: id || undefined, title,
-      description: document.getElementById('taskDesc').value,
-      status:      document.getElementById('taskStatus').value,
-      priority:    document.getElementById('taskPriority').value,
-      due_date:    document.getElementById('taskDue').value || null,
-    };
-    const res  = await fetch(API, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
-    const data = await res.json();
-    if (data.success) { modal.hide(); showToast(data.message, true); loadTasks(); }
-    else showToast(data.message, false);
-  }
-
-  async function delTask(id) {
-    if (!confirm('Delete this task?')) return;
-    const res  = await fetch(`${API}?id=${id}`, { method:'DELETE' });
-    const data = await res.json();
-    if (data.success) { showToast(data.message, true); loadTasks(); }
-  }
-
-  function showToast(msg, ok) {
-    document.getElementById('toastMsg').innerHTML = `<i class="bi bi-${ok ? 'check-circle-fill text-success' : 'x-circle-fill text-danger'}"></i> ${msg}`;
-    toast.show();
-  }
-
-  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-  const statusLbl = s => ({pending:'Pending', in_progress:'In Progress', completed:'Completed'}[s]);
-</script>
+<script src="script.js"></script>
 </body>
 </html>

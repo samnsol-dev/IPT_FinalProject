@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TaskFlow — Login</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg:      #0d0d12;
+      --surface: #13131a;
+      --card:    #1a1a24;
+      --border:  #2a2a3a;
+      --accent:  #7c6aff;
+      --success: #4fdf90;
+      --danger:  #ff4f6a;
+      --text:    #e8e8f0;
+      --muted:   #6b6b90;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-box {
+      width: 100%;
+      max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2.4rem 2rem;
+      margin: 1rem;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      margin-bottom: .3rem;
+      text-align: center;
+    }
+    .logo span { color: var(--accent); }
+
+    .tagline {
+      text-align: center;
+      color: var(--muted);
+      font-size: .82rem;
+      margin-bottom: 2rem;
+    }
+
+    .tab-row {
+      display: flex;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .25rem;
+      margin-bottom: 1.8rem;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: .45rem;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .85rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .tab-btn.active { background: var(--accent); color: #fff; }
+
+    .form-label {
+      font-size: .78rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: .25rem;
+    }
+    .input-wrap {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    .input-wrap i {
+      position: absolute;
+      left: .85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: .9rem;
+      pointer-events: none;
+    }
+    .form-control {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 9px;
+      font-size: .85rem;
+      padding: .6rem .85rem .6rem 2.3rem;
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,106,255,.15);
+      background: var(--card);
+      color: var(--text);
+    }
+    .form-control::placeholder { color: var(--muted); }
+
+    .field-error {
+      font-size: .74rem;
+      color: var(--danger);
+      margin-top: -.6rem;
+      margin-bottom: .7rem;
+      display: none;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: .65rem;
+      font-size: .9rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+      margin-top: .4rem;
+    }
+    .btn-submit:hover { background: #6a58e0; transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .alert-box {
+      border-radius: 9px;
+      padding: .65rem .9rem;
+      font-size: .82rem;
+      margin-bottom: 1rem;
+      display: none;
+      align-items: center;
+      gap: .5rem;
+    }
+    .alert-box.err  { background: rgba(255,79,106,.12); border: 1px solid rgba(255,79,106,.3); color: var(--danger); }
+    .alert-box.succ { background: rgba(79,223,144,.12); border: 1px solid rgba(79,223,144,.3); color: var(--success); }
+
+    #registerPanel { display: none !important; }
+    #registerPanel.active { display: block !important; }
+  </style>
+</head>
+<body>
+
+<div class="auth-box">
+  <div class="logo">Task<span>Flow</span></div>
+  <p class="tagline">Manage and track your to-dos</p>
+
+  <div class="tab-row">
+    <button class="tab-btn active" id="tabLogin"    onclick="switchTab('login')">Login</button>
+    <button class="tab-btn"        id="tabRegister" onclick="switchTab('register')">Register</button>
+  </div>
+
+  <div class="alert-box" id="alertBox"></div>
+
+  <!-- Login -->
+  <div id="loginPanel">
+    <div class="mb-1"><label class="form-label">Username</label></div>
+    <div class="input-wrap">
+      <i class="bi bi-person"></i>
+      <input type="text" class="form-control" id="loginUser" placeholder="Enter username"/>
+    </div>
+    <div class="field-error" id="err-luser"></div>
+
+    <div class="mb-1"><label class="form-label">Password</label></div>
+    <div class="input-wrap">
+      <i class="bi bi-lock"></i>
+      <input type="password" class="form-control" id="loginPass" placeholder="••••••••"/>
+    </div>
+    <div class="field-error" id="err-lpass"></div>
+
+    <button class="btn-submit" id="btnLogin" onclick="doLogin()">Login</button>
+  </div>
+
+  <!-- Register -->
+  <div id="registerPanel">
+    <div class="mb-1"><label class="form-label">Username</label></div>
+    <div class="input-wrap">
+      <i class="bi bi-person"></i>
+      <input type="text" class="form-control" id="regUser" placeholder="Choose a username"/>
+    </div>
+    <div class="field-error" id="err-ruser"></div>
+
+    <div class="mb-1"><label class="form-label">Password</label></div>
+    <div class="input-wrap">
+      <i class="bi bi-lock"></i>
+      <input type="password" class="form-control" id="regPass" placeholder="Min. 6 characters"/>
+    </div>
+    <div class="field-error" id="err-rpass"></div>
+
+    <div class="mb-1"><label class="form-label">Confirm Password</label></div>
+    <div class="input-wrap">
+      <i class="bi bi-lock-fill"></i>
+      <input type="password" class="form-control" id="regConfirm" placeholder="Repeat password"/>
+    </div>
+    <div class="field-error" id="err-rconfirm"></div>
+
+    <button class="btn-submit" id="btnRegister" onclick="doRegister()">Create Account</button>
+  </div>
+</div>
+
+<script>
+  if (sessionStorage.getItem('user')) {
+    window.location.href = 'index.html';
+  }
+
+  const API = 'api.php';
+
+  function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('loginPanel').style.display = isLogin ? '' : 'none';
+    document.getElementById('registerPanel').classList.toggle('active', !isLogin);
+    document.getElementById('tabLogin').classList.toggle('active', isLogin);
+    document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+    hideAlert();
+    clearErrors();
+  }
+
+  function showAlert(msg, type = 'err') {
+    const box = document.getElementById('alertBox');
+    const icon = type === 'succ' ? 'check-circle-fill' : 'exclamation-circle-fill';
+    box.innerHTML = `<i class="bi bi-${icon}"></i> ${msg}`;
+    box.className = `alert-box ${type}`;
+    box.style.display = 'flex';
+  }
+  function hideAlert() { document.getElementById('alertBox').style.display = 'none'; }
+
+  function setErr(id, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+  }
+  function clearErrors() {
+    ['err-luser','err-lpass','err-ruser','err-rpass','err-rconfirm'].forEach(id => setErr(id, ''));
+  }
+
+  async function doLogin() {
+    hideAlert(); clearErrors();
+    let valid = true;
+    const username = document.getElementById('loginUser').value.trim();
+    const pass     = document.getElementById('loginPass').value;
+
+    if (!username) { setErr('err-luser', 'Username is required.'); valid = false; }
+    if (!pass)     { setErr('err-lpass', 'Password is required.'); valid = false; }
+    if (!valid) return;
+
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = true; btn.textContent = 'Logging in…';
+
+    try {
+      const res  = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', username, password: pass }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showAlert('Login successful! Redirecting…', 'succ');
+        sessionStorage.setItem('user', JSON.stringify(data.data));
+        setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+      } else {
+        showAlert(data.message || 'Invalid credentials.');
+      }
+    } catch {
+      showAlert('Cannot reach the server.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Login';
+    }
+  }
+
+  async function doRegister() {
+    hideAlert(); clearErrors();
+    let valid = true;
+    const username = document.getElementById('regUser').value.trim();
+    const pass     = document.getElementById('regPass').value;
+    const confirm  = document.getElementById('regConfirm').value;
+
+    if (!username)          { setErr('err-ruser',    'Username is required.'); valid = false; }
+    if (!pass)              { setErr('err-rpass',    'Password is required.'); valid = false; }
+    else if (pass.length < 6) { setErr('err-rpass', 'Password must be at least 6 characters.'); valid = false; }
+    if (pass !== confirm)   { setErr('err-rconfirm', 'Passwords do not match.'); valid = false; }
+    if (!valid) return;
+
+    const btn = document.getElementById('btnRegister');
+    btn.disabled = true; btn.textContent = 'Creating account…';
+
+    try {
+      const res  = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'register', username, password: pass }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showAlert('Account created! You can now log in.', 'succ');
+        setTimeout(() => switchTab('login'), 1500);
+      } else {
+        showAlert(data.message || 'Registration failed.');
+      }
+    } catch {
+      showAlert('Cannot reach the server.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Create Account';
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const loginVisible = document.getElementById('loginPanel').style.display !== 'none';
+    if (loginVisible) doLogin(); else doRegister();
+  });
+</script>
+</body>
+</html>
