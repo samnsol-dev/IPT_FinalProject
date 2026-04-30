@@ -181,6 +181,13 @@ function showConfirm(opts) {
         var bsModal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
 
         var resolved = false;
+        var promiseSettled = false;  // Tracks whether resolve() has been called
+
+        function safeResolve(result) {
+            if (promiseSettled) return;
+            promiseSettled = true;
+            resolve(result);
+        }
 
         function finish(result) {
             if (resolved) return;
@@ -188,11 +195,36 @@ function showConfirm(opts) {
             // Remove listeners before hide
             okBtn.removeEventListener('click', onOk);
             cancelBtn.removeEventListener('click', onCancel);
-            bsModal.hide();
-            modalEl.addEventListener('hidden.bs.modal', function _done() {
-                modalEl.removeEventListener('hidden.bs.modal', _done);
-                resolve(result);
-            });
+
+            function afterHide() {
+                modalEl.removeEventListener('hidden.bs.modal', afterHide);
+                safeResolve(result);
+            }
+            modalEl.addEventListener('hidden.bs.modal', afterHide);
+
+            try {
+                bsModal.hide();
+            } catch (e) {
+                // If hide() fails (modal already hidden / Bootstrap stacking conflict),
+                // resolve immediately so the caller is never stuck.
+                modalEl.removeEventListener('hidden.bs.modal', afterHide);
+                safeResolve(result);
+            }
+
+            // Safety timeout: if hidden.bs.modal never fires within 600ms, resolve anyway.
+            // Bootstrap 5 cannot properly stack multiple modals; this prevents hangs.
+            setTimeout(function() {
+                modalEl.removeEventListener('hidden.bs.modal', afterHide);
+                // Force-clean any orphaned modal state
+                try {
+                    var inst = bootstrap.Modal.getInstance(modalEl);
+                    if (inst) inst.dispose();
+                } catch(ex) {}
+                document.body.classList.remove('modal-open');
+                var backdrops = document.querySelectorAll('.modal-backdrop');
+                for (var i = 0; i < backdrops.length; i++) backdrops[i].remove();
+                safeResolve(result);
+            }, 600);
         }
 
         function onOk()     { finish(true);  }
@@ -422,7 +454,7 @@ function buildCard(task, highlight) {
             <button class="ic-btn edit" onclick="event.stopPropagation();openEdit(${task.id})" title="Edit">
                 <i class="bi bi-pencil"></i>
             </button>
-            <button class="ic-btn del" onclick="event.stopPropagation();delTask(${task.id}, ${JSON.stringify(task.title)})" title="Delete">
+            <button class="ic-btn del" onclick="event.stopPropagation();delTask(${task.id})" title="Delete">
                 <i class="bi bi-trash"></i>
             </button>`;
     }
@@ -530,7 +562,7 @@ function buildRow(task) {
     var actionButtons = '';
     if (isOwner) {
         actionButtons = `<button class="ic-btn edit" onclick="event.stopPropagation();openEdit(${task.id})" title="Edit"><i class="bi bi-pencil"></i></button>
-            <button class="ic-btn del" onclick="event.stopPropagation();delTask(${task.id}, ${safeTitle})" title="Delete"><i class="bi bi-trash"></i></button>`;
+            <button class="ic-btn del" onclick="event.stopPropagation();delTask(${task.id})" title="Delete"><i class="bi bi-trash"></i></button>`;
     }
 
     // My Tasks: all clickable
@@ -1034,32 +1066,17 @@ async function saveTask() {
     }
 }
 
-async function delTask(id, taskTitle, postedBy) {
-    // Resolve delete permission
-    var confirmed = await showConfirm({
-        type:    'danger',
-        icon:    'bi-trash3-fill',
-        title:   'Delete Task?',
-        sub:     'You\'re about to permanently delete' + (taskTitle ? ' <strong>' + escapeHTML(taskTitle) + '</strong>' : ' this task') + '.',
-        warning: 'This action cannot be undone.',
-        okLabel: 'Delete Task',
-        cancelLabel: 'Keep It',
-    });
-    if (!confirmed) return;
-
+async function delTask(id) {
     try {
         var res  = await fetch(API + '?id=' + id + '&user=' + encodeURIComponent(currentUser.username), { method: 'DELETE' });
         var data = await safeJson(res);
-
         if (data && data.success) {
-            showToast(data.message || 'Task deleted.', true);
+            showToast('Task deleted.', true);
             loadTasks();
         } else {
             showToast(data?.message || 'Failed to delete task.', false);
         }
-
     } catch (err) {
-        console.log('delTask error:', err);
         showToast('Network error — could not delete task.', false);
     }
 }
